@@ -1,62 +1,81 @@
 const express = require('express');
-const mssql = require('mssql');
-const cors = require('cors');
-
+const sql = require('mssql');
+const bodyParser = require('body-parser');
 const app = express();
-const port = 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Configuración de la conexión a la base de datos
+// Configuración de conexión a SQL Server
 const config = {
-    user: 'RYZEN5600\\Specialist', // Escapa la barra invertida
-    password: 'tu_contraseña', // Coloca aquí tu contraseña
-    server: 'RYZEN5600\\MSSQLSERVER01', // Nombre del servidor
-    database: 'tu_base_de_datos', // Nombre de tu base de datos
+    user: '',  // Deja vacío si usas autenticación de Windows
+    password: '',  // No se necesita en autenticación de Windows
+    server: 'NATHAN\\SQLEXPRESS',  // Nombre del servidor en SQL Server Management Studio
+    database: 'BoletasServicio',  // Cambia por el nombre de tu base de datos
     options: {
-        encrypt: true, // Usa esto si estás en Azure
-        trustServerCertificate: true // Cambia esto según tu configuración
+        trustServerCertificate: true,
+        encrypt: true
     }
 };
 
-    
-
-
-// Endpoint para insertar datos de Boleta y Repuestos
-app.post('/api/boletas', async (req, res) => {
+// Ruta para procesar el formulario
+app.post('/guardarReporte', async (req, res) => {
     try {
-        const pool = await mssql.connect(config);
+        let pool = await sql.connect(config);
         
-        const { cliente, tecnico, fecha, codigo, descripcion, cantidad } = req.body;
+        const {
+            cliente, tecnico, fecha, nro_incidencia, modelo, serie, motivo_servicio, 
+            condicion_equipo, accion_tomada, hora_inicial_viaje, hora_final_viaje, 
+            hora_inicial_trabajo, hora_final_trabajo, contometro_inicial, 
+            contometro_final, proformar_repuestos, facturar_mano_obra, 
+            maquina_operativa, vn, nt, vt, observaciones, codigo, descripcion, cantidad, estado
+        } = req.body;
 
-        // Insertar en la tabla Boletas
-        const boletaResult = await pool.request()
-            .input('Cliente', mssql.VarChar, cliente)
-            .input('Tecnico', mssql.VarChar, tecnico)
-            .input('Fecha', mssql.Date, fecha)
-            .output('NumeroBoleta', mssql.Int) // Para obtener el ID generado
-            .execute('sp_insertar_boleta'); // Asegúrate de crear un procedimiento almacenado para la inserción
-
-        const numeroBoleta = boletaResult.output.NumeroBoleta;
-
-        // Insertar en la tabla Repuestos
         await pool.request()
-            .input('Codigo', mssql.VarChar, codigo)
-            .input('Descripcion', mssql.VarChar, descripcion)
-            .input('Cantidad', mssql.Int, cantidad)
-            .execute('sp_insertar_repuesto'); // Procedimiento almacenado para la tabla Repuestos
+            .input('cliente', sql.VarChar, cliente)
+            .input('tecnico', sql.VarChar, tecnico)
+            .input('fecha', sql.Date, fecha)
+            .input('nro_incidencia', sql.Int, nro_incidencia)
+            .input('modelo', sql.VarChar, modelo)
+            .input('serie', sql.VarChar, serie)
+            .input('motivo_servicio', sql.VarChar, motivo_servicio)
+            .input('condicion_equipo', sql.VarChar, condicion_equipo)
+            .input('accion_tomada', sql.VarChar, accion_tomada)
+            .input('hora_inicial_viaje', sql.Time, hora_inicial_viaje)
+            .input('hora_final_viaje', sql.Time, hora_final_viaje)
+            .input('hora_inicial_trabajo', sql.Time, hora_inicial_trabajo)
+            .input('hora_final_trabajo', sql.Time, hora_final_trabajo)
+            .input('vn', sql.Float, vn)
+            .input('nt', sql.Float, nt)
+            .input('vt', sql.Float, vt)
+            .input('observaciones', sql.VarChar, observaciones)
+            .query(`INSERT INTO Boletas (Cliente, Tecnico, Fecha, NroIncidencia, Modelo, Serie, MotivoServicio, CondicionEquipo, 
+                AccionTomada, HoraInicialViaje, HoraFinalViaje, HoraInicialTrabajo, HoraFinalTrabajo, VN, NT, VT, Observaciones)
+                VALUES (@cliente, @tecnico, @fecha, @nro_incidencia, @modelo, @serie, @motivo_servicio, @condicion_equipo, 
+                @accion_tomada, @hora_inicial_viaje, @hora_final_viaje, @hora_inicial_trabajo, @hora_final_trabajo, 
+                @vn, @nt, @vt, @observaciones)`);
 
-        res.status(201).json({ message: 'Datos insertados correctamente', numeroBoleta });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error en la inserción de datos');
+        // Manejo de los repuestos
+        if (codigo && descripcion && cantidad && estado) {
+            for (let i = 0; i < codigo.length; i++) {
+                await pool.request()
+                    .input('codigo', sql.VarChar, codigo[i])
+                    .input('descripcion', sql.VarChar, descripcion[i])
+                    .input('cantidad', sql.Int, cantidad[i])
+                    .input('estado', sql.VarChar, estado[i])
+                    .query(`INSERT INTO Repuestos (Codigo, Descripcion, Cantidad, Estado)
+                            VALUES (@codigo, @descripcion, @cantidad, @estado)`);
+            }
+        }
+
+        res.send('Reporte guardado exitosamente');
+    } catch (err) {
+        console.error('Error al conectar o guardar en SQL Server:', err);
+        res.status(500).send('Error en el servidor');
     }
 });
 
 // Iniciar el servidor
-app.listen(port, () => {
-    console.log(`Servidor escuchando en http://localhost:${port}`);
+app.listen(3000, () => {
+    console.log('Servidor escuchando en el puerto 3000');
 });
