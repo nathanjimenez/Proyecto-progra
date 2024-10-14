@@ -78,49 +78,38 @@
         }
     </style>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         function generarNumeroBoleta() {
             const numeroBoleta = Math.floor(Math.random() * 9000) + 1000;
             document.getElementById('numeroBoleta').innerText = numeroBoleta;
         }
 
-        function agregarFila() {
-            var codigo = document.getElementById('codigo').value;
-            var descripcion = document.getElementById('descripcion').value;
-            var cantidad = document.getElementById('cantidad').value;
-            var estado = document.getElementById('estado').value;
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-            if (codigo === '' || descripcion === '' || cantidad === '' || estado === '') {
-                alert('Por favor, complete todos los campos antes de agregar el repuesto.');
-                return;
-            }
+            // Agregar contenido al PDF
+            doc.setFontSize(22);
+            doc.text("Reporte de Actividad y Servicio", 20, 30);
+            doc.setFontSize(16);
+            doc.text("Cliente: " + document.getElementById('cliente').value, 20, 50);
+            doc.text("Técnico: " + document.getElementById('tecnico').value, 20, 60);
+            doc.text("Fecha: " + document.getElementById('fecha').value, 20, 70);
+            doc.text("Número de Incidencia: " + document.getElementById('numeroIncidencia').value, 20, 90);
+            doc.text("Modelo: " + document.getElementById('modelo').value, 20, 100);
+            doc.text("Serie: " + document.getElementById('serie').value, 20, 110);
+            doc.text("Motivo del Servicio: " + document.getElementById('motivoServicio').value, 20, 120);
+            
+            // Aquí puedes agregar más detalles según sea necesario
+            
+            doc.save("reporte_actividad_servicio.pdf");
+        }
 
-            var tabla = document.getElementById('tabla-repuestos').getElementsByTagName('tbody')[0];
-            var nuevaFila = tabla.insertRow();
-            var celdaCodigo = nuevaFila.insertCell(0);
-            var celdaDescripcion = nuevaFila.insertCell(1);
-            var celdaCantidad = nuevaFila.insertCell(2);
-            var celdaEstado = nuevaFila.insertCell(3);
-            var celdaAccion = nuevaFila.insertCell(4);
-
-            celdaCodigo.innerHTML = codigo;
-            celdaDescripcion.innerHTML = descripcion;
-            celdaCantidad.innerHTML = cantidad;
-            celdaEstado.innerHTML = estado;
-
-            var botonEliminar = document.createElement('button');
-            botonEliminar.innerHTML = 'Eliminar';
-            botonEliminar.className = 'remove-btn';
-            botonEliminar.onclick = function() {
-                var fila = this.parentNode.parentNode;
-                fila.parentNode.removeChild(fila);
-            };
-            celdaAccion.appendChild(botonEliminar);
-
-            document.getElementById('codigo').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('cantidad').value = '';
-            document.getElementById('estado').value = '';
+        function submitForm(event) {
+            event.preventDefault();
+            generarPDF(); // Generar PDF al enviar el formulario
+            alert('Formulario enviado exitosamente y el PDF ha sido generado.');
         }
 
         window.onload = generarNumeroBoleta;
@@ -136,425 +125,163 @@
         <span class="boleta-numero">BOLETA NRO: <span id="numeroBoleta"></span></span>
     </h2>
     
-    <form id="boletaForm" action="/guardarReporte" method="POST">
+    <form id="boletaForm" onsubmit="submitForm(event)" method="POST">
 
+        <!-- Información del Cliente -->
+        <div class="section">
+            <label for="cliente">Cliente:</label>
+            <input type="text" id="cliente" name="cliente" required>
 
+            <label for="tecnico">Técnico:</label>
+            <input type="text" id="tecnico" name="tecnico" required>
 
-
-    <!-- Información del Cliente -->
-    <div class="section">
-        <label for="cliente">Cliente:</label>
-        <input type="text" id="cliente" name="cliente" required>
-
-        <label for="tecnico">Técnico:</label>
-        <input type="text" id="tecnico" name="tecnico" required>
-
-        <label for="fecha">Fecha:</label>
-        <input type="date" id="fecha" name="fecha" required>
-    </div>
-
-    <!-- Detalles del Servicio -->
-    <div class="section">
-        <h2>Detalles del Servicio</h2>
-        <label for="numeroIncidencia">Número de Incidencia:</label>
-        <input type="number" id="numeroIncidencia" name="nro_incidencia">
-
-        <label for="modelo">Modelo:</label>
-        <input type="text" id="modelo" name="modelo">
-
-        <label for="serie">Serie:</label>
-        <input type="text" id="serie" name="serie">
-
-        <label for="motivoServicio">Motivo del Servicio:</label>
-        <textarea id="motivoServicio" name="motivo_servicio"></textarea>
-
-        <label for="condicion_equipo">Condición del equipo:</label>
-        <input type="text" id="condicion_equipo" name="condicion_equipo">
-
-        <label for="accion_tomada">Acción tomada:</label>
-        <input type="text" id="accion_tomada" name="accion_tomada">
-    </div>
-
-    <!-- Tiempos de Trabajo -->
-    <div class="section">
-        <h2>Tiempos de Trabajo</h2>
-        <table>
-            <tr>
-                <td><label for="hora_inicial_viaje">Hora inicial viaje</label></td>
-                <td><input type="time" id="hora_inicial_viaje" name="hora_inicial_viaje" required></td>
-                <td><label for="hora_final_viaje">Hora final viaje</label></td>
-                <td><input type="time" id="hora_final_viaje" name="hora_final_viaje" required></td>
-            </tr>
-            <tr>
-                <td><label for="hora_inicial_trabajo">Hora inicial trabajo</label></td>
-                <td><input type="time" id="hora_inicial_trabajo" name="hora_inicial_trabajo" required></td>
-                <td><label for="hora_final_trabajo">Hora final trabajo</label></td>
-                <td><input type="time" id="hora_final_trabajo" name="hora_final_trabajo" required></td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Bloque de Contómetro -->
-    <div class="section">
-        <h2>Contómetro</h2>
-        <table>
-            <tr>
-                <td><label for="contometro_inicial">Inicial:</label></td>
-                <td><input type="text" id="contometro_inicial" name="contometro_inicial"></td>
-            </tr>
-            <tr>
-                <td><label for="contometro_final">Final:</label></td>
-                <td><input type="text" id="contometro_final" name="contometro_final"></td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Bloque de Sí/No -->
-    <div class="section">
-        <h2>Opciones</h2>
-        <table>
-            <tr>
-                <th></th>
-                <th>SÍ</th>
-                <th>NO</th>
-            </tr>
-            <tr>
-                <td>Proformar repuestos</td>
-                <td><input type="radio" name="proformar_repuestos" value="sí"></td>
-                <td><input type="radio" name="proformar_repuestos" value="no"></td>
-            </tr>
-            <tr>
-                <td>Facturar mano de obra</td>
-                <td><input type="radio" name="facturar_mano_obra" value="sí"></td>
-                <td><input type="radio" name="facturar_mano_obra" value="no"></td>
-            </tr>
-            <tr>
-                <td>Máquina operativa</td>
-                <td><input type="radio" name="maquina_operativa" value="sí"></td>
-                <td><input type="radio" name="maquina_operativa" value="no"></td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Mediciones de Voltaje -->
-    <div class="section">
-        <h2>Mediciones de Voltaje</h2>
-        <div class="voltage-group">
-            <div>
-                <label for="vn">V-N</label>
-                <input type="number" id="vn" name="vn">
-            </div>
-            <div>
-                <label for="nt">N-T</label>
-                <input type="number" id="nt" name="nt">
-            </div>
-            <div>
-                <label for="vt">V-T</label>
-                <input type="number" id="vt" name="vt">
-            </div>
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha" name="fecha" required>
         </div>
-    </div>
 
-    <!-- Observaciones -->
-    <div class="section">
-        <h2>Observaciones</h2>
-        <input type="text" name="observaciones" class="full">
-    </div>
+        <!-- Detalles del Servicio -->
+        <div class="section">
+            <h2>Detalles del Servicio</h2>
+            <label for="numeroIncidencia">Número de Incidencia:</label>
+            <input type="number" id="numeroIncidencia" name="nro_incidencia">
 
-    <!-- CHECK LIST SERVICIO TÉCNICO -->
-    <div class="section">
-        <h2>Check List Servicio Técnico</h2>
+            <label for="modelo">Modelo:</label>
+            <input type="text" id="modelo" name="modelo">
 
-        <!-- Ambiente de Trabajo -->
-        <h3>Ambiente de Trabajo</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>N</th>
-                    <th>Descripción</th>
-                    <th>Correcto</th>
-                    <th>Defectuoso</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Equipo expuesto a un ambiente adecuado</td>
-                    <td><input type="radio" name="ambiente1" value="correcto"></td>
-                    <td><input type="radio" name="ambiente1" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Equipo con múltiples conexiones</td>
-                    <td><input type="radio" name="ambiente2" value="correcto"></td>
-                    <td><input type="radio" name="ambiente2" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Toma a tierra</td>
-                    <td><input type="radio" name="ambiente3" value="correcto"></td>
-                    <td><input type="radio" name="ambiente3" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>4</td>
-                    <td>Revisión nivel de voltaje adecuado estabilizado</td>
-                    <td><input type="radio" name="ambiente4" value="correcto"></td>
-                    <td><input type="radio" name="ambiente4" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>5</td>
-                    <td>Limpieza externa/interna</td>
-                    <td><input type="radio" name="ambiente5" value="correcto"></td>
-                    <td><input type="radio" name="ambiente5" value="defectuoso"></td>
-                </tr>
-            </tbody>
-        </table>
+            <label for="serie">Serie:</label>
+            <input type="text" id="serie" name="serie">
 
-        <!-- Insumos Utilizados -->
-        <h3>Insumos Utilizados</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>N</th>
-                    <th>Descripción</th>
-                    <th>Correcto</th>
-                    <th>Defectuoso</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>6</td>
-                    <td>Tipo de papel adecuado</td>
-                    <td><input type="radio" name="insumo1" value="correcto"></td>
-                    <td><input type="radio" name="insumo1" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>7</td>
-                    <td>Verificación del uso de toner original</td>
-                    <td><input type="radio" name="insumo2" value="correcto"></td>
-                    <td><input type="radio" name="insumo2" value="defectuoso"></td>
-                </tr>
-            </tbody>
-        </table>
+            <label for="motivoServicio">Motivo del Servicio:</label>
+            <textarea id="motivoServicio" name="motivo_servicio"></textarea>
 
-        <!-- Unidades y Accesorios -->
-        <h3>Unidades y Accesorios</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>N</th>
-                    <th>Descripción</th>
-                    <th>Correcto</th>
-                    <th>Defectuoso</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>8</td>
-                    <td>Sistema óptico</td>
-                    <td><input type="radio" name="unidad1" value="correcto"></td>
-                    <td><input type="radio" name="unidad1" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>9</td>
-                    <td>Entorno del fotoconductor</td>
-                    <td><input type="radio" name="unidad2" value="correcto"></td>
-                    <td><input type="radio" name="unidad2" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>10</td>
-                    <td>Unidad de limpieza</td>
-                    <td><input type="radio" name="unidad3" value="correcto"></td>
-                    <td><input type="radio" name="unidad3" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>11</td>
-                    <td>Unidad de transferencia</td>
-                    <td><input type="radio" name="unidad4" value="correcto"></td>
-                    <td><input type="radio" name="unidad4" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>12</td>
-                    <td>Unidad de revelado</td>
-                    <td><input type="radio" name="unidad5" value="correcto"></td>
-                    <td><input type="radio" name="unidad5" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>13</td>
-                    <td>Unidad de alimentación de papel</td>
-                    <td><input type="radio" name="unidad6" value="correcto"></td>
-                    <td><input type="radio" name="unidad6" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>14</td>
-                    <td>Unidad de fusión y salida de papel</td>
-                    <td><input type="radio" name="unidad7" value="correcto"></td>
-                    <td><input type="radio" name="unidad7" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>15</td>
-                    <td>Envase de toner residual</td>
-                    <td><input type="radio" name="unidad8" value="correcto"></td>
-                    <td><input type="radio" name="unidad8" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>16</td>
-                    <td>Panel de operaciones y pulsadores</td>
-                    <td><input type="radio" name="unidad9" value="correcto"></td>
-                    <td><input type="radio" name="unidad9" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>17</td>
-                    <td>Unidad dúplex</td>
-                    <td><input type="radio" name="unidad10" value="correcto"></td>
-                    <td><input type="radio" name="unidad10" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>18</td>
-                    <td>Bandejas de papel</td>
-                    <td><input type="radio" name="unidad11" value="correcto"></td>
-                    <td><input type="radio" name="unidad11" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>19</td>
-                    <td>Sistema eléctrico y mecánico</td>
-                    <td><input type="radio" name="unidad12" value="correcto"></td>
-                    <td><input type="radio" name="unidad12" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>20</td>
-                    <td>Alimentador de originales</td>
-                    <td><input type="radio" name="unidad13" value="correcto"></td>
-                    <td><input type="radio" name="unidad13" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>21</td>
-                    <td>Bandeja de gran capacidad</td>
-                    <td><input type="radio" name="unidad14" value="correcto"></td>
-                    <td><input type="radio" name="unidad14" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>22</td>
-                    <td>Finalizador</td>
-                    <td><input type="radio" name="unidad15" value="correcto"></td>
-                    <td><input type="radio" name="unidad15" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>23</td>
-                    <td>Mail box</td>
-                    <td><input type="radio" name="unidad16" value="correcto"></td>
-                    <td><input type="radio" name="unidad16" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>24</td>
-                    <td>Unidad láser</td>
-                    <td><input type="radio" name="unidad17" value="correcto"></td>
-                    <td><input type="radio" name="unidad17" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>25</td>
-                    <td>Unidad by pass</td>
-                    <td><input type="radio" name="unidad18" value="correcto"></td>
-                    <td><input type="radio" name="unidad18" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>26</td>
-                    <td>Unidad puente</td>
-                    <td><input type="radio" name="unidad19" value="correcto"></td>
-                    <td><input type="radio" name="unidad19" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>27</td>
-                    <td>Unidad de intercambio</td>
-                    <td><input type="radio" name="unidad20" value="correcto"></td>
-                    <td><input type="radio" name="unidad20" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>28</td>
-                    <td>Unidad de cubiertas</td>
-                    <td><input type="radio" name="unidad21" value="correcto"></td>
-                    <td><input type="radio" name="unidad21" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>29</td>
-                    <td>Unidad de perforado y grapado</td>
-                    <td><input type="radio" name="unidad22" value="correcto"></td>
-                    <td><input type="radio" name="unidad22" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>30</td>
-                    <td>Unidad de toner</td>
-                    <td><input type="radio" name="unidad23" value="correcto"></td>
-                    <td><input type="radio" name="unidad23" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>31</td>
-                    <td>Unidad salida de papel</td>
-                    <td><input type="radio" name="unidad24" value="correcto"></td>
-                    <td><input type="radio" name="unidad24" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>32</td>
-                    <td>Tapas y cubiertas</td>
-                    <td><input type="radio" name="unidad25" value="correcto"></td>
-                    <td><input type="radio" name="unidad25" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>33</td>
-                    <td>Eléctrico</td>
-                    <td><input type="radio" name="unidad26" value="correcto"></td>
-                    <td><input type="radio" name="unidad26" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>34</td>
-                    <td>Mecánico</td>
-                    <td><input type="radio" name="unidad27" value="correcto"></td>
-                    <td><input type="radio" name="unidad27" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>35</td>
-                    <td>Impresión</td>
-                    <td><input type="radio" name="unidad28" value="correcto"></td>
-                    <td><input type="radio" name="unidad28" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>36</td>
-                    <td>Escáner</td>
-                    <td><input type="radio" name="unidad29" value="correcto"></td>
-                    <td><input type="radio" name="unidad29" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>37</td>
-                    <td>Fax</td>
-                    <td><input type="radio" name="unidad30" value="correcto"></td>
-                    <td><input type="radio" name="unidad30" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>38</td>
-                    <td>Software</td>
-                    <td><input type="radio" name="unidad31" value="correcto"></td>
-                    <td><input type="radio" name="unidad31" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>39</td>
-                    <td>Dispositivo remoto</td>
-                    <td><input type="radio" name="unidad32" value="correcto"></td>
-                    <td><input type="radio" name="unidad32" value="defectuoso"></td>
-                </tr>
-                <tr>
-                    <td>40</td>
-                    <td>Configuración</td>
-                    <td><input type="radio" name="unidad33" value="correcto"></td>
-                    <td><input type="radio" name="unidad33" value="defectuoso"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <label for="condicion_equipo">Condición del equipo:</label>
+            <input type="text" id="condicion_equipo" name="condicion_equipo">
 
-    <button type="button" class="submit-btn" onclick="submitForm()">Enviar Reporte</button>
-    <div id="responseMessage" style="margin-top: 20px;"></div>
-</form>
+            <label for="accion_tomada">Acción tomada:</label>
+            <input type="text" id="accion_tomada" name="accion_tomada">
+        </div>
+
+        <!-- Tiempos de Trabajo -->
+        <div class="section">
+            <h2>Tiempos de Trabajo</h2>
+            <table>
+                <tr>
+                    <td><label for="hora_inicial_viaje">Hora inicial viaje</label></td>
+                    <td><input type="time" id="hora_inicial_viaje" name="hora_inicial_viaje" required></td>
+                    <td><label for="hora_final_viaje">Hora final viaje</label></td>
+                    <td><input type="time" id="hora_final_viaje" name="hora_final_viaje" required></td>
+                </tr>
+                <tr>
+                    <td><label for="hora_inicial_trabajo">Hora inicial trabajo</label></td>
+                    <td><input type="time" id="hora_inicial_trabajo" name="hora_inicial_trabajo" required></td>
+                    <td><label for="hora_final_trabajo">Hora final trabajo</label></td>
+                    <td><input type="time" id="hora_final_trabajo" name="hora_final_trabajo" required></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Bloque de Contómetro -->
+        <div class="section">
+            <h2>Contómetro</h2>
+            <table>
+                <tr>
+                    <td><label for="contometro_inicial">Inicial:</label></td>
+                    <td><input type="text" id="contometro_inicial" name="contometro_inicial"></td>
+                </tr>
+                <tr>
+                    <td><label for="contometro_final">Final:</label></td>
+                    <td><input type="text" id="contometro_final" name="contometro_final"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Bloque de Sí/No -->
+        <div class="section">
+            <h2>Opciones</h2>
+            <table>
+                <tr>
+                    <th></th>
+                    <th>SÍ</th>
+                    <th>NO</th>
+                </tr>
+                <tr>
+                    <td>Proformar repuestos</td>
+                    <td><input type="radio" name="proformar_repuestos" value="sí"></td>
+                    <td><input type="radio" name="proformar_repuestos" value="no"></td>
+                </tr>
+                <tr>
+                    <td>Facturar mano de obra</td>
+                    <td><input type="radio" name="facturar_mano_obra" value="sí"></td>
+                    <td><input type="radio" name="facturar_mano_obra" value="no"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Lista de Repuestos -->
+        <div class="section">
+            <h2>Repuestos</h2>
+            <label for="codigo">Código:</label>
+            <input type="text" id="codigo" name="codigo">
+
+            <label for="descripcion">Descripción:</label>
+            <input type="text" id="descripcion" name="descripcion">
+
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" id="cantidad" name="cantidad">
+
+            <button type="button" onclick="agregarRepuesto()">Agregar Repuesto</button>
+
+            <table id="tablaRepuestos">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí se agregarán los repuestos -->
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit">Enviar Reporte</button>
+    </form>
 </div>
+
+<script>
+    function agregarRepuesto() {
+        const codigo = document.getElementById('codigo').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const cantidad = document.getElementById('cantidad').value;
+
+        if (codigo === "" || descripcion === "" || cantidad === "") {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        const tablaRepuestos = document.getElementById('tablaRepuestos').getElementsByTagName('tbody')[0];
+        const nuevaFila = tablaRepuestos.insertRow();
+
+        nuevaFila.insertCell(0).innerText = codigo;
+        nuevaFila.insertCell(1).innerText = descripcion;
+        nuevaFila.insertCell(2).innerText = cantidad;
+
+        const btnEliminar = document.createElement("button");
+        btnEliminar.innerText = "Eliminar";
+        btnEliminar.className = "remove-btn";
+        btnEliminar.onclick = function() {
+            tablaRepuestos.deleteRow(nuevaFila.rowIndex - 1);
+        };
+        nuevaFila.insertCell(3).appendChild(btnEliminar);
+
+        // Limpiar los campos después de agregar
+        document.getElementById('codigo').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('cantidad').value = '';
+    }
+</script>
 
 </body>
 </html>
